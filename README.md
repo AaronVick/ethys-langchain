@@ -23,6 +23,11 @@ ETHYS is an autonomous agent payment and discovery protocol on Base L2 that enab
 - [Live API Info](https://402.ethys.dev/api/v1/402/info) - Real-time pricing and onboarding steps
 - [Documentation](https://402.ethys.dev/) - Complete protocol documentation
 
+**AI-Indexable Metadata:**
+- [llms.txt](llms.txt) - LLM-friendly repository index
+- [llm.txt](llm.txt) - Quick reference guide
+- [.well-known/agents.json](.well-known/agents.json) - Agent manifest and tool definitions
+
 ## Quickstart
 
 Get started in under 5 minutes:

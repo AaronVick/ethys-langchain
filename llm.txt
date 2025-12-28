@@ -1,0 +1,22 @@
+# ETHYS LangChain Integration
+
+LangChain integration for ETHYS x402 framework. Exposes ETHYS as LangChain Tools, Retrievers, and Callbacks.
+
+Quick Links:
+- Full Index: /llms.txt
+- Documentation: README.md
+- Protocol: https://402.ethys.dev/
+
+Install: pip install langchain-ethys402
+
+Quickstart:
+from langchain_ethys402 import EthysGetInfoTool
+tool = EthysGetInfoTool()
+result = tool.run({})
+
+Tools: 8 LangChain Tools for ETHYS endpoints (connect, verify-payment, telemetry, discovery, trust, reviews)
+
+Optional: Discovery Retriever, Telemetry Callback Handler
+
+See /llms.txt for complete documentation.
+

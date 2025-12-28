@@ -1,0 +1,145 @@
+# ETHYS LangChain Integration - LLM Index
+
+[Project]
+Name: ethys-langchain
+Type: LangChain Integration Package
+Repository: https://github.com/AaronVick/ethys-langchain
+Package: langchain-ethys402
+Version: 0.1.0
+Language: Python 3.9+
+Framework: LangChain 0.1.0+
+
+[Purpose]
+Production-ready LangChain integration for ETHYS x402 framework. Exposes ETHYS as first-class LangChain Tools, Retrievers, and Callbacks for wallet-signed identity, trust scoring, agent discovery, and telemetry submission.
+
+Protocol Sources of Truth:
+- Protocol Discovery: https://402.ethys.dev/.well-known/x402.json
+- LLM Index: https://402.ethys.dev/llms.txt
+- Live API Info: https://402.ethys.dev/api/v1/402/info
+- Documentation: https://402.ethys.dev/
+
+[Install]
+pip install langchain-ethys402
+
+Development install:
+git clone https://github.com/AaronVick/ethys-langchain.git
+cd ethys-langchain
+pip install -e ".[dev]"
+
+[Quickstart]
+from langchain.agents import AgentExecutor, create_openai_functions_agent
+from langchain_openai import ChatOpenAI
+from langchain_ethys402 import EthysGetInfoTool, EthysDiscoverySearchTool
+
+tools = [EthysGetInfoTool(), EthysDiscoverySearchTool()]
+llm = ChatOpenAI(temperature=0)
+agent = create_openai_functions_agent(llm, tools, prompt)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+result = agent_executor.invoke({"input": "Get ETHYS protocol information"})
+
+[Key Files]
+README.md - Complete documentation and usage guide
+pyproject.toml - Package metadata and dependencies
+src/langchain_ethys402/__init__.py - Public API exports
+src/langchain_ethys402/tools.py - LangChain Tools implementation
+src/langchain_ethys402/auth.py - Identity encoding and wallet signing
+src/langchain_ethys402/client.py - HTTP client (sync + async)
+src/langchain_ethys402/types.py - Pydantic v2 models
+src/langchain_ethys402/errors.py - Typed error hierarchy
+src/langchain_ethys402/config.py - Configuration management
+src/langchain_ethys402/retrievers.py - Discovery Retriever
+src/langchain_ethys402/callbacks.py - Telemetry Callback Handler
+examples/langchain_agent_connect_verify.py - Connect and verify payment
+examples/langchain_agent_discovery_and_trust.py - Discovery and trust operations
+examples/telemetry_callback_example.py - Telemetry callback usage
+tests/test_auth.py - Identity and signing tests
+tests/test_client.py - HTTP client tests
+tests/test_tools.py - LangChain Tools tests
+docs/12-28-review.md - Engineering review and protocol alignment
+.env.example - Environment variable template
+CONTRIBUTING.md - Contribution guidelines
+SECURITY.md - Security policy
+
+[APIs / Tools]
+LangChain Tools (all support sync and async):
+- EthysGetInfoTool: GET /api/v1/402/info - Protocol info, pricing, onboarding
+- EthysConnectTool: POST /api/v1/402/connect - Connect agent with wallet signature
+- EthysVerifyPaymentTool: POST /api/v1/402/verify-payment - Verify ETHYS payment
+- EthysTelemetryTool: POST /api/v1/402/telemetry - Submit telemetry (wallet-signed)
+- EthysDiscoverySearchTool: GET /api/v1/402/discovery/search - Search agents
+- EthysTrustScoreTool: GET /api/v1/402/trust/score - Get trust score
+- EthysTrustAttestTool: POST /api/v1/402/trust/attest - Submit trust attestation
+- EthysReviewsSubmitTool: POST /api/v1/402/reviews/submit - Submit reviews (EIP-712)
+
+Optional Components:
+- EthysDiscoveryRetriever: LangChain BaseRetriever for RAG pipelines
+- EthysTelemetryCallbackHandler: Automatic telemetry (opt-in only)
+
+[Examples]
+Run examples:
+python examples/langchain_agent_connect_verify.py
+python examples/langchain_agent_discovery_and_trust.py
+python examples/telemetry_callback_example.py
+
+Common workflows documented in README.md:
+- Onboarding: Connect + verify payment
+- Discovery: Search agents + get trust scores
+- Telemetry: Submit events with wallet signature
+- Retriever: Use discovery as LangChain retriever
+
+[Environment Variables]
+ETHYS_BASE_URL - Base URL (default: https://402.ethys.dev)
+ETHYS_API_KEY - API key (optional, wallet signature preferred)
+ETHYS_TIMEOUT - Request timeout in seconds (default: 30.0)
+ETHYS_MAX_RETRIES - Max retries (default: 3)
+ETHYS_CHAIN_ID - Chain ID (default: 8453 for Base mainnet)
+ETHYS_TOKEN_ADDRESS - ETHYS token contract address
+ETHYS_TIER_PURCHASE_V1_ADDRESS - V1 purchase contract
+ETHYS_TIER_PURCHASE_V2_ADDRESS - V2 purchase contract
+ETHYS_LIVE_BASE_URL - For live integration tests (optional)
+
+See .env.example for complete template.
+
+[Testing]
+Unit tests (no network required - uses mocks):
+pytest tests/ -v
+
+With coverage:
+pytest --cov=src/langchain_ethys402 --cov-report=html tests/
+
+Type checking:
+mypy src
+
+Linting:
+ruff check .
+
+Formatting:
+ruff format .
+
+All quality gates:
+ruff check . && ruff format . && mypy src && pytest
+
+[Changelog / Versioning]
+Semantic versioning (MAJOR.MINOR.PATCH):
+- MAJOR: Breaking API changes
+- MINOR: New features, backward compatible
+- PATCH: Bug fixes, backward compatible
+
+Current version: 0.1.0
+Python: 3.9, 3.10, 3.11, 3.12
+LangChain: 0.1.0+
+
+[License]
+MIT License - see LICENSE file
+
+[Security]
+Security vulnerabilities: security@ethys.dev
+Security policy: SECURITY.md
+
+Best practices:
+- Never commit private keys or API keys
+- Use environment variables for secrets
+- Avoid logging sensitive data
+- Telemetry callbacks are opt-in only
+- Review contract approvals before signing
+

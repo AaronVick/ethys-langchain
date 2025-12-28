@@ -1,0 +1,171 @@
+{
+  "name": "ethys-langchain",
+  "description": "LangChain integration for ETHYS x402 framework - Tools, Retrievers, and Callbacks",
+  "repo_url": "https://github.com/AaronVick/ethys-langchain",
+  "package_name": "langchain-ethys402",
+  "version": "0.1.0",
+  "type": "integration",
+  "framework": "langchain",
+  "languages": ["python"],
+  "python_versions": ["3.9", "3.10", "3.11", "3.12"],
+  "langchain_version": ">=0.1.0",
+  "primary_use_cases": [
+    "agent_onboarding",
+    "agent_discovery",
+    "trust_scoring",
+    "telemetry_submission",
+    "payment_verification"
+  ],
+  "docs_paths": [
+    "README.md",
+    "docs/12-28-review.md",
+    "llms.txt",
+    "CONTRIBUTING.md",
+    "SECURITY.md"
+  ],
+  "code_paths": [
+    "src/langchain_ethys402/__init__.py",
+    "src/langchain_ethys402/tools.py",
+    "src/langchain_ethys402/auth.py",
+    "src/langchain_ethys402/client.py",
+    "src/langchain_ethys402/types.py",
+    "src/langchain_ethys402/retrievers.py",
+    "src/langchain_ethys402/callbacks.py"
+  ],
+  "examples_paths": [
+    "examples/langchain_agent_connect_verify.py",
+    "examples/langchain_agent_discovery_and_trust.py",
+    "examples/telemetry_callback_example.py"
+  ],
+  "entrypoints": {
+    "python_imports": [
+      "from langchain_ethys402 import EthysGetInfoTool",
+      "from langchain_ethys402 import EthysConnectTool",
+      "from langchain_ethys402 import EthysVerifyPaymentTool",
+      "from langchain_ethys402 import EthysTelemetryTool",
+      "from langchain_ethys402 import EthysDiscoverySearchTool",
+      "from langchain_ethys402 import EthysTrustScoreTool",
+      "from langchain_ethys402 import EthysTrustAttestTool",
+      "from langchain_ethys402 import EthysReviewsSubmitTool",
+      "from langchain_ethys402 import EthysDiscoveryRetriever",
+      "from langchain_ethys402 import EthysTelemetryCallbackHandler",
+      "from langchain_ethys402 import EthysClient",
+      "from langchain_ethys402 import EthysConfig"
+    ],
+    "example_scripts": [
+      "examples/langchain_agent_connect_verify.py",
+      "examples/langchain_agent_discovery_and_trust.py",
+      "examples/telemetry_callback_example.py"
+    ]
+  },
+  "tools": [
+    {
+      "name": "EthysGetInfoTool",
+      "description": "Get ETHYS protocol information, pricing, and onboarding steps",
+      "endpoint": "GET /api/v1/402/info",
+      "auth_required": false
+    },
+    {
+      "name": "EthysConnectTool",
+      "description": "Connect/register agent with wallet signature",
+      "endpoint": "POST /api/v1/402/connect",
+      "auth_required": true,
+      "auth_type": "wallet_signature"
+    },
+    {
+      "name": "EthysVerifyPaymentTool",
+      "description": "Verify ETHYS payment transaction",
+      "endpoint": "POST /api/v1/402/verify-payment",
+      "auth_required": false
+    },
+    {
+      "name": "EthysTelemetryTool",
+      "description": "Submit telemetry events with wallet signature",
+      "endpoint": "POST /api/v1/402/telemetry",
+      "auth_required": true,
+      "auth_type": "wallet_signature"
+    },
+    {
+      "name": "EthysDiscoverySearchTool",
+      "description": "Search agents by capabilities and trust score",
+      "endpoint": "GET /api/v1/402/discovery/search",
+      "auth_required": false
+    },
+    {
+      "name": "EthysTrustScoreTool",
+      "description": "Get agent trust score and reputation metrics",
+      "endpoint": "GET /api/v1/402/trust/score",
+      "auth_required": false
+    },
+    {
+      "name": "EthysTrustAttestTool",
+      "description": "Submit trust attestation for interactions",
+      "endpoint": "POST /api/v1/402/trust/attest",
+      "auth_required": false
+    },
+    {
+      "name": "EthysReviewsSubmitTool",
+      "description": "Submit client reviews with EIP-712 signature",
+      "endpoint": "POST /api/v1/402/reviews/submit",
+      "auth_required": true,
+      "auth_type": "eip712_signature"
+    }
+  ],
+  "optional_components": [
+    {
+      "name": "EthysDiscoveryRetriever",
+      "type": "retriever",
+      "description": "LangChain BaseRetriever for RAG pipelines using discovery search",
+      "class": "langchain_ethys402.EthysDiscoveryRetriever"
+    },
+    {
+      "name": "EthysTelemetryCallbackHandler",
+      "type": "callback",
+      "description": "Automatic telemetry submission during agent execution (opt-in only)",
+      "class": "langchain_ethys402.EthysTelemetryCallbackHandler",
+      "opt_in": true
+    }
+  ],
+  "capabilities": {
+    "identity_types": ["EOA", "ERC6551"],
+    "signing_methods": ["wallet_signature", "eip712_signature"],
+    "execution_modes": ["sync", "async"],
+    "protocol_version": "2.0.0"
+  },
+  "protocol_sources": {
+    "discovery": "https://402.ethys.dev/.well-known/x402.json",
+    "llm_index": "https://402.ethys.dev/llms.txt",
+    "api_info": "https://402.ethys.dev/api/v1/402/info",
+    "documentation": "https://402.ethys.dev/"
+  },
+  "test_command": "pytest tests/ -v",
+  "lint_command": "ruff check .",
+  "format_command": "ruff format .",
+  "typecheck_command": "mypy src",
+  "install_command": "pip install langchain-ethys402",
+  "dev_install_command": "pip install -e \".[dev]\"",
+  "environment_variables": [
+    "ETHYS_BASE_URL",
+    "ETHYS_API_KEY",
+    "ETHYS_TIMEOUT",
+    "ETHYS_MAX_RETRIES",
+    "ETHYS_CHAIN_ID",
+    "ETHYS_TOKEN_ADDRESS",
+    "ETHYS_TIER_PURCHASE_V1_ADDRESS",
+    "ETHYS_TIER_PURCHASE_V2_ADDRESS",
+    "ETHYS_LIVE_BASE_URL"
+  ],
+  "required_env_vars": [],
+  "optional_env_vars": [
+    "ETHYS_BASE_URL",
+    "ETHYS_API_KEY",
+    "ETHYS_TIMEOUT",
+    "ETHYS_MAX_RETRIES",
+    "ETHYS_CHAIN_ID",
+    "ETHYS_TOKEN_ADDRESS",
+    "ETHYS_TIER_PURCHASE_V1_ADDRESS",
+    "ETHYS_TIER_PURCHASE_V2_ADDRESS",
+    "ETHYS_LIVE_BASE_URL"
+  ]
+}
+
