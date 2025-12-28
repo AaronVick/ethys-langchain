@@ -6,15 +6,13 @@ Tier 2: Live smoke tests against 402.ethys.dev (opt-in via ETHYS_LIVE_TESTS=1)
 
 import json
 import os
-from pathlib import Path
 from typing import Any
 
 import pytest
-from httpx import Response
-from httpx_mock import HTTPXMock
+from pytest_httpx import HTTPXMock
 
 from langchain_ethys402.client import EthysClient
-from langchain_ethys402.errors import ApiError, AuthError, ValidationError
+from langchain_ethys402.errors import ApiError
 from langchain_ethys402.tools import (
     EthysConnectTool,
     EthysDiscoverySearchTool,
@@ -93,8 +91,7 @@ class TestProtocolAlignmentMocked:
             json=mock_info_response,
         )
 
-        tool = EthysGetInfoTool()
-        result = tool.run({})
+        result = EthysGetInfoTool.invoke({})
 
         assert result["success"] is True
         assert result["protocol"] == "x402"
@@ -112,8 +109,7 @@ class TestProtocolAlignmentMocked:
             json=mock_connect_response,
         )
 
-        tool = EthysConnectTool()
-        result = tool.run(
+        result = EthysConnectTool.invoke(
             {
                 "address": "0x1234567890123456789012345678901234567890",
                 "signature": "0xabcdef",
@@ -134,9 +130,8 @@ class TestProtocolAlignmentMocked:
             json={"success": False, "error": "Invalid signature"},
         )
 
-        tool = EthysConnectTool()
         with pytest.raises(ApiError) as exc_info:
-            tool.run(
+            EthysConnectTool.invoke(
                 {
                     "address": "0x1234567890123456789012345678901234567890",
                     "signature": "0xinvalid",
@@ -153,8 +148,7 @@ class TestProtocolAlignmentMocked:
             json={"success": True, "agentId": "agent_test_123", "apiKey": "test_api_key"},
         )
 
-        tool = EthysVerifyPaymentTool()
-        result = tool.run({"agent_id": "agent_test_123", "tx_hash": "0x123"})
+        result = EthysVerifyPaymentTool.invoke({"agent_id": "agent_test_123", "tx_hash": "0x123"})
 
         assert result["success"] is True
         assert result["api_key"] == "test_api_key"
@@ -168,9 +162,8 @@ class TestProtocolAlignmentMocked:
             json={"success": False, "error": "Payment not found"},
         )
 
-        tool = EthysVerifyPaymentTool()
         with pytest.raises(ApiError) as exc_info:
-            tool.run({"agent_id": "agent_test_123", "tx_hash": "0xinvalid"})
+            EthysVerifyPaymentTool.invoke({"agent_id": "agent_test_123", "tx_hash": "0xinvalid"})
         assert exc_info.value.status_code == 400
 
     def test_telemetry_validates_payload_schema(self, httpx_mock: HTTPXMock) -> None:
@@ -181,8 +174,7 @@ class TestProtocolAlignmentMocked:
             json={"success": True, "eventsProcessed": 1},
         )
 
-        tool = EthysTelemetryTool()
-        result = tool.run(
+        result = EthysTelemetryTool.invoke(
             {
                 "agent_id": "agent_test_123",
                 "address": "0x1234567890123456789012345678901234567890",
@@ -205,9 +197,8 @@ class TestProtocolAlignmentMocked:
             json={"success": False, "error": "Invalid signature format"},
         )
 
-        tool = EthysTelemetryTool()
         with pytest.raises(ApiError) as exc_info:
-            tool.run(
+            EthysTelemetryTool.invoke(
                 {
                     "agent_id": "agent_test_123",
                     "address": "0x1234567890123456789012345678901234567890",
@@ -227,8 +218,7 @@ class TestProtocolAlignmentMocked:
             json={"success": True, "agents": [], "total": 0},
         )
 
-        tool = EthysDiscoverySearchTool()
-        result = tool.run({"min_trust_score": 600, "limit": 10})
+        result = EthysDiscoverySearchTool.invoke({"min_trust_score": 600, "limit": 10})
 
         assert result["success"] is True
         assert "agents" in result
@@ -252,8 +242,7 @@ class TestProtocolAlignmentMocked:
             },
         )
 
-        tool = EthysDiscoverySearchTool()
-        result = tool.run({})
+        result = EthysDiscoverySearchTool.invoke({})
 
         assert result["success"] is True
         assert len(result["agents"]) == 1
@@ -275,8 +264,7 @@ class TestProtocolAlignmentMocked:
             },
         )
 
-        tool = EthysTrustScoreTool()
-        result = tool.run({"agent_id": "agent_test_123"})
+        result = EthysTrustScoreTool.invoke({"agent_id": "agent_test_123"})
 
         assert result["success"] is True
         assert result["trust_score"] == 750
@@ -290,8 +278,7 @@ class TestProtocolAlignmentMocked:
             json={"success": True, "attestationId": "attest_123"},
         )
 
-        tool = EthysTrustAttestTool()
-        result = tool.run(
+        result = EthysTrustAttestTool.invoke(
             {
                 "agent_id": "agent_test_123",
                 "target_agent_id": "agent_target_456",
@@ -341,20 +328,18 @@ class TestProtocolAlignmentMocked:
             json=mock_info_response,
         )
 
-        tool = EthysGetInfoTool()
-        result = await tool.ainvoke({})
+        result = await EthysGetInfoTool.ainvoke({})
 
         assert result["success"] is True
         assert result["protocol"] == "x402"
 
     def test_tool_input_schema_validation(self) -> None:
         """Test that tool input schemas validate correctly."""
-        tool = EthysConnectTool()
+        # Invalid input should raise pydantic ValidationError
+        from pydantic import ValidationError
 
-        # Valid input should work (will fail on network, but schema should pass)
-        # Invalid input should raise ValidationError
-        with pytest.raises(Exception):  # Pydantic validation error
-            tool.run({"invalid": "input"})
+        with pytest.raises(ValidationError):
+            EthysConnectTool.invoke({"invalid": "input"})
 
 
 # Tier 2: Live Smoke Tests (opt-in)
@@ -452,12 +437,12 @@ class TestProtocolAlignmentLive:
         # Extract URLs (bounded to 25)
         urls_to_check = []
         if "docs" in x402_data:
-            for key, value in x402_data["docs"].items():
+            for _key, value in x402_data["docs"].items():
                 if isinstance(value, str) and value.startswith("/"):
                     urls_to_check.append(f"{base_url}{value}")
 
         if "endpoints" in x402_data:
-            for key, value in x402_data["endpoints"].items():
+            for _key, value in x402_data["endpoints"].items():
                 if isinstance(value, str) and value.startswith("/"):
                     urls_to_check.append(f"{base_url}{value}")
 
@@ -505,13 +490,16 @@ class TestProtocolAlignmentLive:
                             )
                             return  # Success
                     except json.JSONDecodeError:
-                        # Try YAML
-                        import yaml
-
+                        # Try YAML (optional dependency)
                         try:
+                            import yaml
+
                             data = yaml.safe_load(response.text)
                             if "openapi" in data or "swagger" in data:
                                 return  # Success
+                        except ImportError:
+                            # yaml not available, skip YAML parsing
+                            pass
                         except Exception:
                             pass
             except Exception:

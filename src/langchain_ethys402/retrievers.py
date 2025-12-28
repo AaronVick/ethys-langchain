@@ -1,8 +1,9 @@
 """LangChain Retrievers for ETHYS x402 discovery."""
 
-from typing import Any, List
+from typing import Any
 
-from langchain.schema import BaseRetriever, Document
+from langchain_core.documents import Document
+from langchain_core.retrievers import BaseRetriever
 from pydantic import Field
 
 from langchain_ethys402.client import EthysClient
@@ -21,7 +22,7 @@ class EthysDiscoveryRetriever(BaseRetriever):
     service_types: str = Field(default="", description="Comma-separated service types filter")
     limit: int = Field(default=10, description="Maximum number of results")
 
-    def _get_relevant_documents(self, query: str) -> List[Document]:
+    def _get_relevant_documents(self, query: str) -> list[Document]:
         """Get relevant documents synchronously."""
         params = DiscoverySearchParams(
             query=query,
@@ -68,7 +69,7 @@ class EthysDiscoveryRetriever(BaseRetriever):
 
         return documents
 
-    async def _aget_relevant_documents(self, query: str) -> List[Document]:
+    async def _aget_relevant_documents(self, query: str) -> list[Document]:
         """Get relevant documents asynchronously."""
         params = DiscoverySearchParams(
             query=query,

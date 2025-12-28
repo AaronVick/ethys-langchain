@@ -4,9 +4,9 @@ from typing import Any
 
 from eth_account import Account
 from eth_account.messages import encode_defunct
-from eth_utils import keccak, to_bytes, to_hex
+from eth_utils import keccak, to_hex
 
-from langchain_ethys402.errors import AuthError, ValidationError
+from langchain_ethys402.errors import ValidationError
 from langchain_ethys402.types import AgentIdentity
 
 
@@ -114,7 +114,7 @@ def sign_message(message: str, private_key: str) -> str:
     account = Account.from_key(private_key)
     message_encoded = encode_defunct(text=message)
     signed = account.sign_message(message_encoded)
-    return signed.signature.hex()
+    return "0x" + signed.signature.hex()
 
 
 def verify_signature(message: str, signature: str, address: str) -> bool:

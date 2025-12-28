@@ -3,7 +3,6 @@
 from langchain_ethys402 import (
     EthysDiscoverySearchTool,
     EthysTrustScoreTool,
-    EthysTrustAttestTool,
 )
 
 
@@ -45,7 +44,7 @@ def main() -> None:
             trust_result = trust_tool.run({"agent_id": agent_id})
 
             if trust_result["success"]:
-                print(f"✅ Trust Score Details:")
+                print("✅ Trust Score Details:")
                 print(f"   Trust Score: {trust_result.get('trust_score', 'N/A')}")
                 print(f"   Reliability Score: {trust_result.get('reliability_score', 'N/A')}")
                 print(f"   Coherence Index: {trust_result.get('coherence_index', 'N/A')}")
@@ -56,8 +55,8 @@ def main() -> None:
     # Step 3: Submit trust attestation (example)
     print("Step 3: Submitting trust attestation...")
     print("   (This is an example - in production, use after actual interaction)")
-    attest_tool = EthysTrustAttestTool()
     # Note: This would require actual agent IDs from a real interaction
+    # attest_tool = EthysTrustAttestTool()  # Would be used here
     print("   ⚠️  Skipping attestation (requires real agent IDs from interaction)")
 
 

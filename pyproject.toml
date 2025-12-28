@@ -41,7 +41,7 @@ dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-mock>=3.11.0",
-    "httpx-mock>=0.8.0",
+    "pytest-httpx>=0.27.0",
     "types-requests>=2.31.0",
     "pyyaml>=6.0",
 ]
@@ -61,6 +61,8 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -97,8 +99,18 @@ show_error_codes = true
 module = [
     "eth_account.*",
     "eth_utils.*",
+    "langchain.*",
+    "langchain_core.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "_pytest.*",
+    "pytest.*",
+]
+follow_imports = "skip"
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

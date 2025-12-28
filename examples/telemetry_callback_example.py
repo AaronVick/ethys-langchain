@@ -1,9 +1,11 @@
 """Example: Using telemetry callback handler (opt-in)."""
 
 import os
+
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
+
 from langchain_ethys402 import (
     EthysGetInfoTool,
     EthysTelemetryCallbackHandler,
@@ -70,7 +72,7 @@ def main() -> None:
         {"input": "Get ETHYS protocol information"},
     )
 
-    print(f"\n✅ Agent execution complete")
+    print("\n✅ Agent execution complete")
     print(f"   Result: {result.get('output', 'N/A')[:100]}...\n")
 
     # Manually flush any pending telemetry events

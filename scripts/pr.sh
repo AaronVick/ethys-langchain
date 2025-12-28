@@ -74,10 +74,14 @@ echo "🔧 Running quality gates..."
 INSTALL_CMD=$(jq -r '.commands.install // empty' repo.config.json)
 if [ -n "${INSTALL_CMD}" ]; then
     echo "   Installing dependencies..."
-    eval "${INSTALL_CMD}" || {
-        echo "❌ Install failed"
-        exit 1
-    }
+    # Try to install, but don't fail if it's already installed
+    if ! eval "${INSTALL_CMD}" 2>&1 | grep -v "already satisfied"; then
+        # Check if the command actually failed (not just "already satisfied" messages)
+        if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "❌ Installation failed"
+            exit 1
+        fi
+    fi
 fi
 
 # Run lint

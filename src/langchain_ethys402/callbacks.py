@@ -1,16 +1,15 @@
 """LangChain Callbacks for ETHYS x402 telemetry."""
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-from langchain.callbacks.base import BaseCallbackHandler
-from langchain.schema import AgentAction, AgentFinish, LLMResult
+from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.outputs import LLMResult
 from pydantic import Field
 
 from langchain_ethys402.auth import generate_nonce, sign_telemetry_request
 from langchain_ethys402.client import EthysClient
 from langchain_ethys402.config import EthysConfig
-from langchain_ethys402.errors import ValidationError
 from langchain_ethys402.types import TelemetryEvent, TelemetryRequest, TelemetryResponse
 
 
@@ -31,7 +30,7 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
     enabled: bool = Field(default=True, description="Whether telemetry is enabled")
     batch_size: int = Field(default=10, description="Number of events to batch before sending")
 
-    _events: List[Dict[str, Any]] = Field(default_factory=list, exclude=True)
+    _events: list[dict[str, Any]] = Field(default_factory=list, exclude=True)
     _last_send_time: float = Field(default=0.0, exclude=True)
 
     def __init__(
@@ -65,7 +64,7 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
         self._events = []
         self._last_send_time = 0.0
 
-    def _add_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    def _add_event(self, event_type: str, data: dict[str, Any]) -> None:
         """Add an event to the batch."""
         if not self.enabled:
             return
@@ -126,7 +125,7 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
             # Don't raise - telemetry failures shouldn't break the main flow
             print(f"Warning: Failed to send telemetry: {str(e)}")
 
-    def on_llm_start(self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any) -> None:
+    def on_llm_start(self, serialized: dict[str, Any], prompts: list[str], **kwargs: Any) -> None:
         """Called when LLM starts."""
         self._add_event(
             "llm_start",
@@ -155,7 +154,7 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
             },
         )
 
-    def on_chain_start(self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any) -> None:
+    def on_chain_start(self, serialized: dict[str, Any], inputs: dict[str, Any], **kwargs: Any) -> None:
         """Called when chain starts."""
         self._add_event(
             "chain_start",
@@ -164,7 +163,7 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
             },
         )
 
-    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
+    def on_chain_end(self, outputs: dict[str, Any], **kwargs: Any) -> None:
         """Called when chain ends."""
         self._add_event(
             "chain_end",
@@ -183,7 +182,7 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
             },
         )
 
-    def on_tool_start(self, serialized: Dict[str, Any], input_str: str, **kwargs: Any) -> None:
+    def on_tool_start(self, serialized: dict[str, Any], input_str: str, **kwargs: Any) -> None:
         """Called when tool starts."""
         self._add_event(
             "tool_start",
@@ -212,22 +211,25 @@ class EthysTelemetryCallbackHandler(BaseCallbackHandler):
             },
         )
 
-    def on_agent_action(self, action: AgentAction, **kwargs: Any) -> None:
+    def on_agent_action(self, action: Any, **kwargs: Any) -> None:
         """Called when agent takes an action."""
+        tool = getattr(action, "tool", "unknown")
+        tool_input = getattr(action, "tool_input", "")
         self._add_event(
             "agent_action",
             {
-                "tool": action.tool,
-                "tool_input": str(action.tool_input)[:100] if action.tool_input else "",  # Truncate
+                "tool": tool,
+                "tool_input": str(tool_input)[:100] if tool_input else "",  # Truncate
             },
         )
 
-    def on_agent_finish(self, finish: AgentFinish, **kwargs: Any) -> None:
+    def on_agent_finish(self, finish: Any, **kwargs: Any) -> None:
         """Called when agent finishes."""
+        return_values = getattr(finish, "return_values", None)
         self._add_event(
             "agent_finish",
             {
-                "return_values_keys": list(finish.return_values.keys()) if finish.return_values else [],
+                "return_values_keys": list(return_values.keys()) if return_values else [],
             },
         )
 

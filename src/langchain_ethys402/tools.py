@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from langchain.tools import StructuredTool
+from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
 from langchain_ethys402.client import EthysClient
@@ -40,7 +40,7 @@ class VerifyPaymentInput(BaseModel):
     """Input schema for EthysVerifyPaymentTool."""
 
     agent_id: str = Field(..., description="Agent ID from connect step")
-    tx_hash: Optional[str] = Field(None, description="Transaction hash (optional, auto-detected if not provided)")
+    tx_hash: Optional[str] = Field(None, description="Transaction hash (optional)")
 
 
 class TelemetryInput(BaseModel):
@@ -93,6 +93,7 @@ class ReviewsSubmitInput(BaseModel):
     message: Optional[dict[str, Any]] = Field(None, description="EIP-712 message")
 
 
+# --- Get Info Tool ---
 def _get_info_sync() -> dict[str, Any]:
     """Get ETHYS protocol info (sync)."""
     client = EthysClient()
@@ -140,12 +141,11 @@ EthysGetInfoTool = StructuredTool.from_function(
 )
 
 
-def _connect_sync(input_data: ConnectInput) -> dict[str, Any]:
+# --- Connect Tool ---
+def _connect_sync(address: str, signature: str, message: str) -> dict[str, Any]:
     """Connect agent (sync)."""
     client = EthysClient()
-    request = ConnectRequest(
-        address=input_data.address, signature=input_data.signature, message=input_data.message
-    )
+    request = ConnectRequest(address=address, signature=signature, message=message)
     response = client.post("/api/v1/402/connect", data=request.model_dump(by_alias=True))
     connect_response = ConnectResponse(**response)
     return {
@@ -156,12 +156,10 @@ def _connect_sync(input_data: ConnectInput) -> dict[str, Any]:
     }
 
 
-async def _connect_async(input_data: ConnectInput) -> dict[str, Any]:
+async def _connect_async(address: str, signature: str, message: str) -> dict[str, Any]:
     """Connect agent (async)."""
     client = EthysClient()
-    request = ConnectRequest(
-        address=input_data.address, signature=input_data.signature, message=input_data.message
-    )
+    request = ConnectRequest(address=address, signature=signature, message=message)
     response = await client.apost("/api/v1/402/connect", data=request.model_dump(by_alias=True))
     connect_response = ConnectResponse(**response)
     return {
@@ -186,10 +184,11 @@ EthysConnectTool = StructuredTool.from_function(
 )
 
 
-def _verify_payment_sync(input_data: VerifyPaymentInput) -> dict[str, Any]:
+# --- Verify Payment Tool ---
+def _verify_payment_sync(agent_id: str, tx_hash: Optional[str] = None) -> dict[str, Any]:
     """Verify payment (sync)."""
     client = EthysClient()
-    request = VerifyPaymentRequest(agent_id=input_data.agent_id, tx_hash=input_data.tx_hash)
+    request = VerifyPaymentRequest(agent_id=agent_id, tx_hash=tx_hash)
     response = client.post("/api/v1/402/verify-payment", data=request.model_dump(by_alias=True))
     verify_response = VerifyPaymentResponse(**response)
     return {
@@ -200,11 +199,13 @@ def _verify_payment_sync(input_data: VerifyPaymentInput) -> dict[str, Any]:
     }
 
 
-async def _verify_payment_async(input_data: VerifyPaymentInput) -> dict[str, Any]:
+async def _verify_payment_async(agent_id: str, tx_hash: Optional[str] = None) -> dict[str, Any]:
     """Verify payment (async)."""
     client = EthysClient()
-    request = VerifyPaymentRequest(agent_id=input_data.agent_id, tx_hash=input_data.tx_hash)
-    response = await client.apost("/api/v1/402/verify-payment", data=request.model_dump(by_alias=True))
+    request = VerifyPaymentRequest(agent_id=agent_id, tx_hash=tx_hash)
+    response = await client.apost(
+        "/api/v1/402/verify-payment", data=request.model_dump(by_alias=True)
+    )
     verify_response = VerifyPaymentResponse(**response)
     return {
         "success": verify_response.success,
@@ -219,7 +220,7 @@ EthysVerifyPaymentTool = StructuredTool.from_function(
     coroutine=_verify_payment_async,
     name="ethys_verify_payment",
     description=(
-        "Verify ETHYS payment transaction after calling buyTierAuto() on the purchase contract. "
+        "Verify ETHYS payment transaction after calling buyTierAuto() on the contract. "
         "Requires: agent_id (from connect) and optionally tx_hash (transaction hash). "
         "Returns success status and API key if payment is verified."
     ),
@@ -227,18 +228,25 @@ EthysVerifyPaymentTool = StructuredTool.from_function(
 )
 
 
-def _telemetry_sync(input_data: TelemetryInput) -> dict[str, Any]:
+# --- Telemetry Tool ---
+def _telemetry_sync(
+    agent_id: str,
+    address: str,
+    timestamp: int,
+    nonce: str,
+    events: list[dict[str, Any]],
+    signature: str,
+) -> dict[str, Any]:
     """Submit telemetry (sync)."""
     client = EthysClient()
-    # Validate events
-    telemetry_events = [TelemetryEvent(**event) for event in input_data.events]
+    telemetry_events = [TelemetryEvent(**event) for event in events]
     request = TelemetryRequest(
-        agent_id=input_data.agent_id,
-        address=input_data.address,
-        ts=input_data.timestamp,
-        nonce=input_data.nonce,
+        agent_id=agent_id,
+        address=address,
+        ts=timestamp,
+        nonce=nonce,
         events=[e.model_dump(by_alias=True) for e in telemetry_events],
-        signature=input_data.signature,
+        signature=signature,
     )
     response = client.post("/api/v1/402/telemetry", data=request.model_dump(by_alias=True))
     telemetry_response = TelemetryResponse(**response)
@@ -249,18 +257,24 @@ def _telemetry_sync(input_data: TelemetryInput) -> dict[str, Any]:
     }
 
 
-async def _telemetry_async(input_data: TelemetryInput) -> dict[str, Any]:
+async def _telemetry_async(
+    agent_id: str,
+    address: str,
+    timestamp: int,
+    nonce: str,
+    events: list[dict[str, Any]],
+    signature: str,
+) -> dict[str, Any]:
     """Submit telemetry (async)."""
     client = EthysClient()
-    # Validate events
-    telemetry_events = [TelemetryEvent(**event) for event in input_data.events]
+    telemetry_events = [TelemetryEvent(**event) for event in events]
     request = TelemetryRequest(
-        agent_id=input_data.agent_id,
-        address=input_data.address,
-        ts=input_data.timestamp,
-        nonce=input_data.nonce,
+        agent_id=agent_id,
+        address=address,
+        ts=timestamp,
+        nonce=nonce,
         events=[e.model_dump(by_alias=True) for e in telemetry_events],
-        signature=input_data.signature,
+        signature=signature,
     )
     response = await client.apost("/api/v1/402/telemetry", data=request.model_dump(by_alias=True))
     telemetry_response = TelemetryResponse(**response)
@@ -285,44 +299,73 @@ EthysTelemetryTool = StructuredTool.from_function(
 )
 
 
-def _discovery_search_sync(input_data: DiscoverySearchInput) -> dict[str, Any]:
+# --- Discovery Search Tool ---
+def _discovery_search_sync(
+    query: Optional[str] = None,
+    min_trust_score: Optional[int] = None,
+    service_types: Optional[str] = None,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> dict[str, Any]:
     """Search discovery (sync)."""
     client = EthysClient()
     params = DiscoverySearchParams(
-        query=input_data.query,
-        min_trust_score=input_data.min_trust_score,
-        service_types=input_data.service_types,
-        limit=input_data.limit,
-        offset=input_data.offset,
+        query=query,
+        min_trust_score=min_trust_score,
+        service_types=service_types,
+        limit=limit,
+        offset=offset,
     )
     query_params = params.model_dump(by_alias=True, exclude_none=True)
     response = client.get("/api/v1/402/discovery/search", params=query_params)
     search_response = DiscoverySearchResponse(**response)
     return {
         "success": search_response.success,
-        "agents": [agent.model_dump(by_alias=True) for agent in search_response.agents],
+        "agents": [
+            {
+                "agent_id": agent.agent_id,
+                "name": agent.name,
+                "trust_score": agent.trust_score,
+                "service_types": agent.service_types,
+            }
+            for agent in search_response.agents
+        ],
         "total": search_response.total,
         "limit": search_response.limit,
         "offset": search_response.offset,
     }
 
 
-async def _discovery_search_async(input_data: DiscoverySearchInput) -> dict[str, Any]:
+async def _discovery_search_async(
+    query: Optional[str] = None,
+    min_trust_score: Optional[int] = None,
+    service_types: Optional[str] = None,
+    limit: Optional[int] = None,
+    offset: Optional[int] = None,
+) -> dict[str, Any]:
     """Search discovery (async)."""
     client = EthysClient()
     params = DiscoverySearchParams(
-        query=input_data.query,
-        min_trust_score=input_data.min_trust_score,
-        service_types=input_data.service_types,
-        limit=input_data.limit,
-        offset=input_data.offset,
+        query=query,
+        min_trust_score=min_trust_score,
+        service_types=service_types,
+        limit=limit,
+        offset=offset,
     )
     query_params = params.model_dump(by_alias=True, exclude_none=True)
     response = await client.aget("/api/v1/402/discovery/search", params=query_params)
     search_response = DiscoverySearchResponse(**response)
     return {
         "success": search_response.success,
-        "agents": [agent.model_dump(by_alias=True) for agent in search_response.agents],
+        "agents": [
+            {
+                "agent_id": agent.agent_id,
+                "name": agent.name,
+                "trust_score": agent.trust_score,
+                "service_types": agent.service_types,
+            }
+            for agent in search_response.agents
+        ],
         "total": search_response.total,
         "limit": search_response.limit,
         "offset": search_response.offset,
@@ -335,7 +378,7 @@ EthysDiscoverySearchTool = StructuredTool.from_function(
     name="ethys_discovery_search",
     description=(
         "Search for agents in the ETHYS discovery system. "
-        "Optional parameters: query (search string), min_trust_score (minimum trust score), "
+        "Optional parameters: query (search string), min_trust_score (minimum score), "
         "service_types (comma-separated list), limit (max results), offset (pagination). "
         "Returns list of matching agents with their trust scores and capabilities."
     ),
@@ -343,12 +386,15 @@ EthysDiscoverySearchTool = StructuredTool.from_function(
 )
 
 
-def _trust_score_sync(input_data: TrustScoreInput) -> dict[str, Any]:
+# --- Trust Score Tool ---
+def _trust_score_sync(
+    agent_id: Optional[str] = None, agent_id_key: Optional[str] = None
+) -> dict[str, Any]:
     """Get trust score (sync)."""
-    if not input_data.agent_id and not input_data.agent_id_key:
+    if not agent_id and not agent_id_key:
         raise ValidationError("Either agent_id or agent_id_key must be provided")
     client = EthysClient()
-    params = TrustScoreRequest(agent_id=input_data.agent_id, agent_id_key=input_data.agent_id_key)
+    params = TrustScoreRequest(agent_id=agent_id, agent_id_key=agent_id_key)
     query_params = params.model_dump(by_alias=True, exclude_none=True)
     response = client.get("/api/v1/402/trust/score", params=query_params)
     trust_response = TrustScoreResponse(**response)
@@ -363,12 +409,14 @@ def _trust_score_sync(input_data: TrustScoreInput) -> dict[str, Any]:
     }
 
 
-async def _trust_score_async(input_data: TrustScoreInput) -> dict[str, Any]:
+async def _trust_score_async(
+    agent_id: Optional[str] = None, agent_id_key: Optional[str] = None
+) -> dict[str, Any]:
     """Get trust score (async)."""
-    if not input_data.agent_id and not input_data.agent_id_key:
+    if not agent_id and not agent_id_key:
         raise ValidationError("Either agent_id or agent_id_key must be provided")
     client = EthysClient()
-    params = TrustScoreRequest(agent_id=input_data.agent_id, agent_id_key=input_data.agent_id_key)
+    params = TrustScoreRequest(agent_id=agent_id, agent_id_key=agent_id_key)
     query_params = params.model_dump(by_alias=True, exclude_none=True)
     response = await client.aget("/api/v1/402/trust/score", params=query_params)
     trust_response = TrustScoreResponse(**response)
@@ -396,15 +444,22 @@ EthysTrustScoreTool = StructuredTool.from_function(
 )
 
 
-def _trust_attest_sync(input_data: TrustAttestInput) -> dict[str, Any]:
+# --- Trust Attest Tool ---
+def _trust_attest_sync(
+    agent_id: str,
+    target_agent_id: str,
+    interaction_type: str,
+    rating: Optional[int] = None,
+    notes: Optional[str] = None,
+) -> dict[str, Any]:
     """Submit trust attestation (sync)."""
     client = EthysClient()
     request = TrustAttestRequest(
-        agent_id=input_data.agent_id,
-        target_agent_id=input_data.target_agent_id,
-        interaction_type=input_data.interaction_type,
-        rating=input_data.rating,
-        notes=input_data.notes,
+        agent_id=agent_id,
+        target_agent_id=target_agent_id,
+        interaction_type=interaction_type,
+        rating=rating,
+        notes=notes,
     )
     response = client.post("/api/v1/402/trust/attest", data=request.model_dump(by_alias=True))
     attest_response = TrustAttestResponse(**response)
@@ -415,15 +470,21 @@ def _trust_attest_sync(input_data: TrustAttestInput) -> dict[str, Any]:
     }
 
 
-async def _trust_attest_async(input_data: TrustAttestInput) -> dict[str, Any]:
+async def _trust_attest_async(
+    agent_id: str,
+    target_agent_id: str,
+    interaction_type: str,
+    rating: Optional[int] = None,
+    notes: Optional[str] = None,
+) -> dict[str, Any]:
     """Submit trust attestation (async)."""
     client = EthysClient()
     request = TrustAttestRequest(
-        agent_id=input_data.agent_id,
-        target_agent_id=input_data.target_agent_id,
-        interaction_type=input_data.interaction_type,
-        rating=input_data.rating,
-        notes=input_data.notes,
+        agent_id=agent_id,
+        target_agent_id=target_agent_id,
+        interaction_type=interaction_type,
+        rating=rating,
+        notes=notes,
     )
     response = await client.apost("/api/v1/402/trust/attest", data=request.model_dump(by_alias=True))
     attest_response = TrustAttestResponse(**response)
@@ -448,19 +509,28 @@ EthysTrustAttestTool = StructuredTool.from_function(
 )
 
 
-def _reviews_submit_sync(input_data: ReviewsSubmitInput) -> dict[str, Any]:
+# --- Reviews Submit Tool ---
+def _reviews_submit_sync(
+    agent_id: str,
+    rating: int,
+    signature: str,
+    review_text: Optional[str] = None,
+    domain: Optional[dict[str, Any]] = None,
+    types: Optional[dict[str, Any]] = None,
+    message: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """Submit review (sync)."""
-    if input_data.rating < 1 or input_data.rating > 5:
+    if rating < 1 or rating > 5:
         raise ValidationError("rating must be between 1 and 5")
     client = EthysClient()
     request = ReviewsSubmitRequest(
-        agent_id=input_data.agent_id,
-        rating=input_data.rating,
-        review_text=input_data.review_text,
-        signature=input_data.signature,
-        domain=input_data.domain,
-        types=input_data.types,
-        message=input_data.message,
+        agent_id=agent_id,
+        rating=rating,
+        review_text=review_text,
+        signature=signature,
+        domain=domain,
+        types=types,
+        message=message,
     )
     response = client.post("/api/v1/402/reviews/submit", data=request.model_dump(by_alias=True))
     reviews_response = ReviewsSubmitResponse(**response)
@@ -471,21 +541,31 @@ def _reviews_submit_sync(input_data: ReviewsSubmitInput) -> dict[str, Any]:
     }
 
 
-async def _reviews_submit_async(input_data: ReviewsSubmitInput) -> dict[str, Any]:
+async def _reviews_submit_async(
+    agent_id: str,
+    rating: int,
+    signature: str,
+    review_text: Optional[str] = None,
+    domain: Optional[dict[str, Any]] = None,
+    types: Optional[dict[str, Any]] = None,
+    message: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
     """Submit review (async)."""
-    if input_data.rating < 1 or input_data.rating > 5:
+    if rating < 1 or rating > 5:
         raise ValidationError("rating must be between 1 and 5")
     client = EthysClient()
     request = ReviewsSubmitRequest(
-        agent_id=input_data.agent_id,
-        rating=input_data.rating,
-        review_text=input_data.review_text,
-        signature=input_data.signature,
-        domain=input_data.domain,
-        types=input_data.types,
-        message=input_data.message,
+        agent_id=agent_id,
+        rating=rating,
+        review_text=review_text,
+        signature=signature,
+        domain=domain,
+        types=types,
+        message=message,
     )
-    response = await client.apost("/api/v1/402/reviews/submit", data=request.model_dump(by_alias=True))
+    response = await client.apost(
+        "/api/v1/402/reviews/submit", data=request.model_dump(by_alias=True)
+    )
     reviews_response = ReviewsSubmitResponse(**response)
     return {
         "success": reviews_response.success,
@@ -506,4 +586,3 @@ EthysReviewsSubmitTool = StructuredTool.from_function(
     ),
     args_schema=ReviewsSubmitInput,
 )
-
