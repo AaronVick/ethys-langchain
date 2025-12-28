@@ -34,7 +34,7 @@ def test_get_info_tool(httpx_mock: HTTPXMock) -> None:
             "features": [],
         },
     )
-    result = EthysGetInfoTool.run({})
+    result = EthysGetInfoTool.invoke({})
     assert result["success"] is True
     assert result["protocol"] == "x402"
 
@@ -51,7 +51,7 @@ def test_connect_tool(httpx_mock: HTTPXMock) -> None:
         signature="0xabc",
         message="Test message",
     )
-    result = EthysConnectTool.run(input_data.model_dump())
+    result = EthysConnectTool.invoke(input_data.model_dump())
     assert result["success"] is True
     assert result["agent_id"] == "test_agent"
 
@@ -64,7 +64,7 @@ def test_verify_payment_tool(httpx_mock: HTTPXMock) -> None:
         json={"success": True, "agentId": "test_agent", "apiKey": "test_key"},
     )
     input_data = VerifyPaymentInput(agent_id="test_agent", tx_hash="0x123")
-    result = EthysVerifyPaymentTool.run(input_data.model_dump())
+    result = EthysVerifyPaymentTool.invoke(input_data.model_dump())
     assert result["success"] is True
     assert result["api_key"] == "test_key"
 
@@ -77,7 +77,7 @@ def test_discovery_search_tool(httpx_mock: HTTPXMock) -> None:
         json={"success": True, "agents": [], "total": 0},
     )
     input_data = DiscoverySearchInput(query="test", min_trust_score=600)
-    result = EthysDiscoverySearchTool.run(input_data.model_dump())
+    result = EthysDiscoverySearchTool.invoke(input_data.model_dump())
     assert result["success"] is True
     assert result["agents"] == []
 
@@ -95,7 +95,7 @@ def test_trust_score_tool(httpx_mock: HTTPXMock) -> None:
         },
     )
     input_data = TrustScoreInput(agent_id="test_agent")
-    result = EthysTrustScoreTool.run(input_data.model_dump())
+    result = EthysTrustScoreTool.invoke(input_data.model_dump())
     assert result["success"] is True
     assert result["trust_score"] == 750
 
@@ -104,5 +104,5 @@ def test_trust_score_tool_missing_params() -> None:
     """Test EthysTrustScoreTool with missing parameters."""
     input_data = TrustScoreInput()
     with pytest.raises(Exception):  # Should raise ValidationError
-        EthysTrustScoreTool.run(input_data.model_dump())
+        EthysTrustScoreTool.invoke(input_data.model_dump())
 

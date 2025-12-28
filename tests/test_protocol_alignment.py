@@ -94,7 +94,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysGetInfoTool()
-        result = tool.run({})
+        result = tool.invoke({})
 
         assert result["success"] is True
         assert result["protocol"] == "x402"
@@ -113,7 +113,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysConnectTool()
-        result = tool.run(
+        result = tool.invoke(
             {
                 "address": "0x1234567890123456789012345678901234567890",
                 "signature": "0xabcdef",
@@ -136,7 +136,7 @@ class TestProtocolAlignmentMocked:
 
         tool = EthysConnectTool()
         with pytest.raises(ApiError) as exc_info:
-            tool.run(
+            tool.invoke(
                 {
                     "address": "0x1234567890123456789012345678901234567890",
                     "signature": "0xinvalid",
@@ -154,7 +154,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysVerifyPaymentTool()
-        result = tool.run({"agent_id": "agent_test_123", "tx_hash": "0x123"})
+        result = tool.invoke({"agent_id": "agent_test_123", "tx_hash": "0x123"})
 
         assert result["success"] is True
         assert result["api_key"] == "test_api_key"
@@ -170,7 +170,7 @@ class TestProtocolAlignmentMocked:
 
         tool = EthysVerifyPaymentTool()
         with pytest.raises(ApiError) as exc_info:
-            tool.run({"agent_id": "agent_test_123", "tx_hash": "0xinvalid"})
+            tool.invoke({"agent_id": "agent_test_123", "tx_hash": "0xinvalid"})
         assert exc_info.value.status_code == 400
 
     def test_telemetry_validates_payload_schema(self, httpx_mock: HTTPXMock) -> None:
@@ -182,7 +182,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysTelemetryTool()
-        result = tool.run(
+        result = tool.invoke(
             {
                 "agent_id": "agent_test_123",
                 "address": "0x1234567890123456789012345678901234567890",
@@ -207,7 +207,7 @@ class TestProtocolAlignmentMocked:
 
         tool = EthysTelemetryTool()
         with pytest.raises(ApiError) as exc_info:
-            tool.run(
+            tool.invoke(
                 {
                     "agent_id": "agent_test_123",
                     "address": "0x1234567890123456789012345678901234567890",
@@ -228,7 +228,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysDiscoverySearchTool()
-        result = tool.run({"min_trust_score": 600, "limit": 10})
+        result = tool.invoke({"min_trust_score": 600, "limit": 10})
 
         assert result["success"] is True
         assert "agents" in result
@@ -253,7 +253,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysDiscoverySearchTool()
-        result = tool.run({})
+        result = tool.invoke({})
 
         assert result["success"] is True
         assert len(result["agents"]) == 1
@@ -276,7 +276,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysTrustScoreTool()
-        result = tool.run({"agent_id": "agent_test_123"})
+        result = tool.invoke({"agent_id": "agent_test_123"})
 
         assert result["success"] is True
         assert result["trust_score"] == 750
@@ -291,7 +291,7 @@ class TestProtocolAlignmentMocked:
         )
 
         tool = EthysTrustAttestTool()
-        result = tool.run(
+        result = tool.invoke(
             {
                 "agent_id": "agent_test_123",
                 "target_agent_id": "agent_target_456",
@@ -351,10 +351,9 @@ class TestProtocolAlignmentMocked:
         """Test that tool input schemas validate correctly."""
         tool = EthysConnectTool()
 
-        # Valid input should work (will fail on network, but schema should pass)
         # Invalid input should raise ValidationError
         with pytest.raises(Exception):  # Pydantic validation error
-            tool.run({"invalid": "input"})
+            tool.invoke({"invalid": "input"})
 
 
 # Tier 2: Live Smoke Tests (opt-in)
@@ -505,13 +504,16 @@ class TestProtocolAlignmentLive:
                             )
                             return  # Success
                     except json.JSONDecodeError:
-                        # Try YAML
-                        import yaml
-
+                        # Try YAML (optional dependency)
                         try:
+                            import yaml
+
                             data = yaml.safe_load(response.text)
                             if "openapi" in data or "swagger" in data:
                                 return  # Success
+                        except ImportError:
+                            # yaml not available, skip YAML parsing
+                            pass
                         except Exception:
                             pass
             except Exception:
