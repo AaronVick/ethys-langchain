@@ -3,7 +3,6 @@
 from langchain_ethys402 import (
     EthysDiscoverySearchTool,
     EthysTrustScoreTool,
-    EthysTrustAttestTool,
 )
 
 

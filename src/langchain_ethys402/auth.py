@@ -4,9 +4,9 @@ from typing import Any
 
 from eth_account import Account
 from eth_account.messages import encode_defunct
-from eth_utils import keccak, to_bytes, to_hex
+from eth_utils import keccak, to_hex
 
-from langchain_ethys402.errors import AuthError, ValidationError
+from langchain_ethys402.errors import ValidationError
 from langchain_ethys402.types import AgentIdentity
 
 
