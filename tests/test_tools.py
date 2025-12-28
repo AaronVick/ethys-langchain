@@ -101,7 +101,7 @@ def test_trust_score_tool(httpx_mock: HTTPXMock) -> None:
 
 def test_trust_score_tool_missing_params() -> None:
     """Test EthysTrustScoreTool with missing parameters."""
-    from pydantic import ValidationError
+    from langchain_ethys402.errors import ValidationError
 
     input_data = TrustScoreInput()
     with pytest.raises(ValidationError):

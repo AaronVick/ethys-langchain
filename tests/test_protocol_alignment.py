@@ -350,7 +350,7 @@ class TestProtocolAlignmentMocked:
         tool = EthysConnectTool()
 
         # Invalid input should raise ValidationError
-        from pydantic import ValidationError
+        from langchain_ethys402.errors import ValidationError
 
         with pytest.raises(ValidationError):
             tool.invoke({"invalid": "input"})

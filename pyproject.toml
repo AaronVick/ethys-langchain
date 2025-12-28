@@ -108,7 +108,6 @@ ignore_missing_imports = true
 module = [
     "_pytest.*",
     "pytest.*",
-    ".*pytest.*",
 ]
 ignore_errors = true
 
