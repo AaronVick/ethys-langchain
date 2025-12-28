@@ -1,6 +1,5 @@
 """Pydantic v2 models for ETHYS x402 API types."""
 
-from datetime import datetime
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator

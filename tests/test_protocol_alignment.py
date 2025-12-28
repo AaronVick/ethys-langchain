@@ -6,15 +6,13 @@ Tier 2: Live smoke tests against 402.ethys.dev (opt-in via ETHYS_LIVE_TESTS=1)
 
 import json
 import os
-from pathlib import Path
 from typing import Any
 
 import pytest
-from httpx import Response
 from pytest_httpx import HTTPXMock
 
 from langchain_ethys402.client import EthysClient
-from langchain_ethys402.errors import ApiError, AuthError, ValidationError
+from langchain_ethys402.errors import ApiError
 from langchain_ethys402.tools import (
     EthysConnectTool,
     EthysDiscoverySearchTool,
@@ -352,7 +350,9 @@ class TestProtocolAlignmentMocked:
         tool = EthysConnectTool()
 
         # Invalid input should raise ValidationError
-        with pytest.raises(Exception):  # Pydantic validation error
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
             tool.invoke({"invalid": "input"})
 
 
@@ -451,12 +451,12 @@ class TestProtocolAlignmentLive:
         # Extract URLs (bounded to 25)
         urls_to_check = []
         if "docs" in x402_data:
-            for key, value in x402_data["docs"].items():
+            for _key, value in x402_data["docs"].items():
                 if isinstance(value, str) and value.startswith("/"):
                     urls_to_check.append(f"{base_url}{value}")
 
         if "endpoints" in x402_data:
-            for key, value in x402_data["endpoints"].items():
+            for _key, value in x402_data["endpoints"].items():
                 if isinstance(value, str) and value.startswith("/"):
                     urls_to_check.append(f"{base_url}{value}")
 

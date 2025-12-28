@@ -11,7 +11,6 @@ from langchain_ethys402.tools import (
     EthysGetInfoTool,
     EthysTrustScoreTool,
     EthysVerifyPaymentTool,
-    TelemetryInput,
     TrustScoreInput,
     VerifyPaymentInput,
 )
@@ -102,7 +101,9 @@ def test_trust_score_tool(httpx_mock: HTTPXMock) -> None:
 
 def test_trust_score_tool_missing_params() -> None:
     """Test EthysTrustScoreTool with missing parameters."""
+    from pydantic import ValidationError
+
     input_data = TrustScoreInput()
-    with pytest.raises(Exception):  # Should raise ValidationError
+    with pytest.raises(ValidationError):
         EthysTrustScoreTool.invoke(input_data.model_dump())
 
