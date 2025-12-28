@@ -70,9 +70,11 @@ def test_verify_payment_tool(httpx_mock: HTTPXMock) -> None:
 
 def test_discovery_search_tool(httpx_mock: HTTPXMock) -> None:
     """Test EthysDiscoverySearchTool."""
+    import re
+
     httpx_mock.add_response(
         method="GET",
-        url="https://402.ethys.dev/api/v1/402/discovery/search",
+        url=re.compile(r"https://402\.ethys\.dev/api/v1/402/discovery/search.*"),
         json={"success": True, "agents": [], "total": 0},
     )
     input_data = DiscoverySearchInput(query="test", min_trust_score=600)
@@ -83,9 +85,11 @@ def test_discovery_search_tool(httpx_mock: HTTPXMock) -> None:
 
 def test_trust_score_tool(httpx_mock: HTTPXMock) -> None:
     """Test EthysTrustScoreTool."""
+    import re
+
     httpx_mock.add_response(
         method="GET",
-        url="https://402.ethys.dev/api/v1/402/trust/score",
+        url=re.compile(r"https://402\.ethys\.dev/api/v1/402/trust/score.*"),
         json={
             "success": True,
             "agentId": "test_agent",

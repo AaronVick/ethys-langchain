@@ -6,7 +6,6 @@ from langchain_ethys402.auth import (
     create_eoa_identity,
     create_erc6551_identity,
     derive_agent_id_key,
-    encode_agent_identity,
     generate_nonce,
     sign_message,
     verify_signature,
@@ -103,9 +102,11 @@ def test_sign_and_verify_message() -> None:
 
 def test_invalid_identity_type() -> None:
     """Test that invalid identity type raises error."""
-    identity = AgentIdentity(
-        version=1, identity_type="INVALID", address="0x1234567890123456789012345678901234567890"
-    )
-    with pytest.raises(ValueError):
-        encode_agent_identity(identity)
+    from pydantic import ValidationError
+
+    # Pydantic validator catches invalid identity_type during model creation
+    with pytest.raises(ValidationError):
+        AgentIdentity(
+            version=1, identity_type="INVALID", address="0x1234567890123456789012345678901234567890"
+        )
 

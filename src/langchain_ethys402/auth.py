@@ -114,7 +114,7 @@ def sign_message(message: str, private_key: str) -> str:
     account = Account.from_key(private_key)
     message_encoded = encode_defunct(text=message)
     signed = account.sign_message(message_encoded)
-    return signed.signature.hex()
+    return "0x" + signed.signature.hex()
 
 
 def verify_signature(message: str, signature: str, address: str) -> bool:
