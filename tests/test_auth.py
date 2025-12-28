@@ -6,6 +6,7 @@ from langchain_ethys402.auth import (
     create_eoa_identity,
     create_erc6551_identity,
     derive_agent_id_key,
+    encode_agent_identity,
     generate_nonce,
     sign_message,
     verify_signature,
