@@ -1,0 +1,67 @@
+## Summary
+
+Production-ready LangChain integration for ETHYS x402 framework. This PR implements ETHYS as first-class LangChain Tools (and optional Retrievers/Callbacks) for connect/auth, payment verification, telemetry submission, discovery search, and trust scoring/attestation.
+
+## What's Included
+
+### Core Package
+- ✅ Complete `langchain_ethys402` package with src-layout
+- ✅ 8 LangChain Tools: `EthysGetInfoTool`, `EthysConnectTool`, `EthysVerifyPaymentTool`, `EthysTelemetryTool`, `EthysDiscoverySearchTool`, `EthysTrustScoreTool`, `EthysTrustAttestTool`, `EthysReviewsSubmitTool`
+- ✅ Optional components: `EthysDiscoveryRetriever`, `EthysTelemetryCallbackHandler`
+- ✅ Full sync/async support for all tools
+- ✅ Strict Pydantic v2 input/output schemas
+
+### Identity & Authentication
+- ✅ Wallet-signed authentication (EOA + ERC-6551 support)
+- ✅ Agent identity encoding with keccak-based key derivation
+- ✅ Optional API-key authentication
+
+### Quality Gates
+- ✅ `ruff` linting and formatting
+- ✅ `mypy` strict type checking
+- ✅ Comprehensive test suite (unit + mocked integration)
+- ✅ Optional live protocol alignment tests (Tier 2)
+
+### Developer Experience
+- ✅ Comprehensive README with quickstart
+- ✅ Example scripts in `/examples`
+- ✅ AI-indexable metadata (`llms.txt`, `agents.json`)
+- ✅ Release PR automation workflow (`make pr`)
+
+### Documentation
+- ✅ Engineering report: `docs/12-28-review.md`
+- ✅ Protocol alignment verification
+- ✅ Error handling documentation
+
+## Quality Gates Checklist
+
+- [x] Lint: `ruff check .` passes
+- [x] Format: `ruff format --check .` passes  
+- [x] Typecheck: `mypy src` passes
+- [x] Tests: `pytest tests/ -v -m "not live"` passes
+
+## Required Files
+
+- [x] `README.md` exists and is up to date
+- [x] `llms.txt` exists and is accurate
+- [x] `.well-known/agents.json` exists and is valid JSON
+- [x] `docs/12-28-review.md` exists
+
+## How to Test
+
+```bash
+# Run quality gates
+make verify
+
+# Run specific test suite
+pytest tests/test_protocol_alignment.py -v
+
+# Run live tests (opt-in)
+ETHYS_LIVE_TESTS=1 pytest tests/ -m live
+```
+
+## Notes
+
+- All tools implement both sync (`_run`) and async (`_arun`) methods
+- Protocol alignment tests verify consistency with `x402.json`, `llms.txt`, and `/info` endpoint
+- CI runs deterministic tests by default; live tests are opt-in via `ETHYS_LIVE_TESTS=1`

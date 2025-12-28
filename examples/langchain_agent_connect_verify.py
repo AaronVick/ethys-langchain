@@ -1,6 +1,7 @@
 """Example: Connect agent and verify payment with LangChain."""
 
 import os
+
 from langchain_ethys402 import EthysConnectTool, EthysVerifyPaymentTool
 from langchain_ethys402.auth import sign_message
 
@@ -52,7 +53,7 @@ def main() -> None:
         )
 
         if verify_result["success"]:
-            print(f"✅ Payment verified!")
+            print("✅ Payment verified!")
             print(f"   API Key: {verify_result.get('api_key', 'N/A')}")
         else:
             print(f"❌ Payment verification failed: {verify_result.get('message', 'Unknown error')}")
