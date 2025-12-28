@@ -1,0 +1,22 @@
+{
+  "repo_name": "ethys-langchain",
+  "repo_type": "langchain",
+  "default_branch": "main",
+  "reviewers": [],
+  "labels": ["release", "automation", "docs", "tests"],
+  "commands": {
+    "install": "pip install -e \".[dev]\"",
+    "lint": "ruff check .",
+    "format_check": "ruff format --check .",
+    "typecheck": "mypy src",
+    "test": "pytest tests/ -v -m \"not live\"",
+    "test_live_optional": "pytest tests/ -m live"
+  },
+  "required_files": [
+    "README.md",
+    "llms.txt",
+    ".well-known/agents.json",
+    "docs/12-28-review.md"
+  ]
+}
+
