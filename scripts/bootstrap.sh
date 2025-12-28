@@ -28,6 +28,16 @@ if ! gh auth status &> /dev/null; then
 fi
 echo "✅ GitHub CLI authenticated"
 
+# Check jq
+if ! command -v jq &> /dev/null; then
+    echo "❌ jq is not installed."
+    echo "   Install from: https://stedolan.github.io/jq/"
+    echo "   macOS: brew install jq"
+    echo "   Linux: apt-get install jq or yum install jq"
+    exit 1
+fi
+echo "✅ jq found: $(jq --version)"
+
 # Check we're in a git repo
 if ! git rev-parse --git-dir &> /dev/null; then
     echo "❌ Not in a git repository."

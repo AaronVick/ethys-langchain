@@ -45,9 +45,6 @@ dev = [
     "types-requests>=2.31.0",
     "pyyaml>=6.0",
 ]
-scripts = [
-    "jq>=1.6",
-]
 
 [project.urls]
 Homepage = "https://402.ethys.dev"
