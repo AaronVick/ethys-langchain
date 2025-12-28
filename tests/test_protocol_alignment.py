@@ -335,8 +335,8 @@ class TestProtocolAlignmentMocked:
 
     def test_tool_input_schema_validation(self) -> None:
         """Test that tool input schemas validate correctly."""
-        # Invalid input should raise ValidationError
-        from langchain_ethys402.errors import ValidationError
+        # Invalid input should raise pydantic ValidationError
+        from pydantic import ValidationError
 
         with pytest.raises(ValidationError):
             EthysConnectTool.invoke({"invalid": "input"})
