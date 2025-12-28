@@ -1,7 +1,7 @@
 """Tests for tools module."""
 
 import pytest
-from httpx_mock import HTTPXMock
+from pytest_httpx import HTTPXMock
 
 from langchain_ethys402.tools import (
     ConnectInput,

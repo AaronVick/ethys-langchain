@@ -2,7 +2,7 @@
 
 import pytest
 from httpx import Response
-from httpx_mock import HTTPXMock
+from pytest_httpx import HTTPXMock
 
 from langchain_ethys402.client import EthysClient
 from langchain_ethys402.config import EthysConfig
