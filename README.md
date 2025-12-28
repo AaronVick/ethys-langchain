@@ -389,6 +389,58 @@ cd ethys-langchain
 pip install -e ".[dev]"
 ```
 
+### Testing Strategy
+
+This repository includes a two-tier testing strategy for protocol alignment:
+
+#### Tier 1: Deterministic Tests (Default)
+
+Default tests use mocked HTTP responses and require no network access. These tests validate:
+- Tool wiring and request construction
+- Response parsing and schema validation
+- Error handling and error mapping
+- Sync and async execution
+- Input schema validation
+
+```bash
+# Run all deterministic tests (no network required)
+pytest tests/ -v
+
+# Run with coverage
+pytest --cov=src/langchain_ethys402 --cov-report=html tests/
+
+# Run specific test file
+pytest tests/test_protocol_alignment.py -v
+```
+
+#### Tier 2: Live Smoke Tests (Opt-in)
+
+Live tests verify that 402.ethys.dev endpoints are reachable and aligned with the protocol. These tests:
+- Validate sources of truth are accessible (x402.json, llms.txt, /info)
+- Check link integrity (bounded crawl of referenced URLs)
+- Detect schema drift in API responses
+- Verify endpoint health and authentication behavior
+
+**⚠️ Live tests require explicit opt-in:**
+
+```bash
+# Enable live tests
+export ETHYS_LIVE_TESTS=1
+# OR
+export ETHYS_MODE=live
+
+# Optionally set custom base URL
+export ETHYS_LIVE_BASE_URL=https://402.ethys.dev
+
+# Run live tests
+pytest tests/test_protocol_alignment.py::TestProtocolAlignmentLive -v --live
+
+# Or run all tests including live
+pytest tests/ -v --live
+```
+
+**Note:** Live tests do not require funds or private keys. They validate endpoint reachability and schema alignment only.
+
 ### Quality Gates
 
 ```bash
@@ -401,14 +453,9 @@ ruff format .
 # Type checking
 mypy src
 
-# Unit tests (no network required - uses mocks)
-pytest tests/ -v
-
-# Tests with coverage
-pytest --cov=src/langchain_ethys402 --cov-report=html tests/
+# All quality gates
+ruff check . && ruff format . && mypy src && pytest tests/ -v
 ```
-
-**Note:** Default tests use mocked HTTP responses and do not require network access. For live integration tests, set `ETHYS_LIVE_BASE_URL` environment variable.
 
 ### CI
 

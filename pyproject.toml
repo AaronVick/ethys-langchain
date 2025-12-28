@@ -106,4 +106,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --strict-markers"
 asyncio_mode = "auto"
+markers = [
+    "live: marks tests as live (require ETHYS_LIVE_TESTS=1)",
+]
 
