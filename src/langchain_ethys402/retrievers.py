@@ -2,7 +2,8 @@
 
 from typing import Any, List
 
-from langchain.schema import BaseRetriever, Document
+from langchain_core.retrievers import BaseRetriever
+from langchain_core.documents import Document
 from pydantic import Field
 
 from langchain_ethys402.client import EthysClient
